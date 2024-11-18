@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/10766/10766489.png">
-    <title>Monitoring Jarak menggunakan Ultrasonik
+    <title>Monitoring Suhu dan Kelembaban</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -16,7 +16,7 @@
 
         body {
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(120deg, #ff8cbc, #f1a9a0); /* Changed to a pink gradient */
+            background: linear-gradient(120deg, #1a2980, #26d0ce);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -200,12 +200,75 @@
 
     <div class="link">
         <a href="table.html">
-            <i class="fas fa-table"></i> Lihat Data Sensor Ultrasonik dengan Jarak
+            <i class="fas fa-table"></i> Lihat Semua Data
         </a>
     </div>
 
     <script>
-        // JavaScript remains the same
+        function updateSensorData() {
+            fetch('https://xxffbxnsfkrfpvuctpde.supabase.co/rest/v1/tabeldht', {
+                headers: {
+                    'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4ZmZieG5zZmtyZnB2dWN0cGRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzE0NzAwMjUsImV4cCI6MjA0NzA0NjAyNX0.FHm25lrfwumgNAbCtIK58u_rCvyUrHfOKTFkxFXdlao',
+                    'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4ZmZieG5zZmtyZnB2dWN0cGRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzE0NzAwMjUsImV4cCI6MjA0NzA0NjAyNX0.FHm25lrfwumgNAbCtIK58u_rCvyUrHfOKTFkxFXdlao'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                data.sort((a, b) => b.id - a.id);
+                const { suhu, kelembapan } = data[0];
+
+                // Update temperature
+                const tempElement = document.getElementById('temperature');
+                tempElement.textContent = suhu.toFixed(1);
+                tempElement.classList.remove('loading');
+                
+                // Update humidity
+                const humElement = document.getElementById('humidity');
+                humElement.textContent = kelembapan.toFixed(1);
+                humElement.classList.remove('loading');
+
+                // Update status messages
+                updateStatus('tempStatus', suhu);
+                updateStatus('humidStatus', kelembapan);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('temperature').textContent = '--';
+                document.getElementById('humidity').textContent = '--';
+                document.getElementById('tempStatus').textContent = 'Error koneksi';
+                document.getElementById('humidStatus').textContent = 'Error koneksi';
+            });
+        }
+
+        function updateStatus(elementId, value) {
+            const element = document.getElementById(elementId);
+            if (elementId === 'tempStatus') {
+                if (value < 18) {
+                    element.textContent = 'Dingin';
+                    element.style.background = '#3498db';
+                } else if (value > 30) {
+                    element.textContent = 'Panas';
+                    element.style.background = '#e74c3c';
+                } else {
+                    element.textContent = 'Normal';
+                    element.style.background = '#2ecc71';
+                }
+            } else {
+                if (value < 30) {
+                    element.textContent = 'Kering';
+                    element.style.background = '#e74c3c';
+                } else if (value > 80) {
+                    element.textContent = 'Lembab';
+                    element.style.background = '#3498db';
+                } else {
+                    element.textContent = 'Normal';
+                    element.style.background = '#2ecc71';
+                }
+            }
+        }
+
+        setInterval(updateSensorData, 3000);
+        updateSensorData();
     </script>
 </body>
 </html>
